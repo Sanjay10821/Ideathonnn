@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   1. GLOBAL RESETS & UI REFINEMENTS
+   ============================================================ */
+html {
+    scroll-behavior: smooth;
+    /* Remove space reserved by Google Translate */
+    margin-top: 0 !important;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    /* CHANGED: Allow body to grow with content */
+    min-height: 100vh; 
+    /* CHANGED: Enable vertical scrolling */
+    overflow-y: auto; 
+    overflow-x: hidden;
+    background-color: #030712;
+    color: #f1f5f9; /* slate-100 */
+    top: 0 !important; /* Prevent Google Translate page jump */
+}
+
+button:focus {
+    outline: none;
+}
+
+:focus-visible {
+    @apply ring-2 ring-emerald-400;
+}
+
+/* ============================================================
+   2. LAYOUT & CONTAINER HELPERS
+   ============================================================ */
+.container-max {
+    /* CHANGED: Use min-h-screen to ensure background covers full view 
+       but allows expansion */
+    @apply max-w-[1600px] mx-auto px-6 min-h-screen flex flex-col;
+}
+
+.shadow-2xl {
+    box-shadow: 0 8px 30px rgba(2, 6, 23, 0.6);
+}
+
+.landing-bg {
+    background-image: url('/legal-bg.jpeg');
+    background-position: center right;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed; /* Keeps background steady during scroll */
+}
+
+/* ============================================================
+   3. ANIMATIONS & TRANSITION UTILITIES
+   ============================================================ */
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-up {
+    animation: fadeUp 420ms cubic-bezier(.2,.9,.2,1) both;
+}
+
+@layer utilities {
+    .ease-premium {
+        transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    
+    .animate-delay-100 { animation-delay: 100ms; }
+    .animate-delay-150 { animation-delay: 150ms; }
+    
+    .delay-200 { transition-delay: 200ms; }
+    .delay-300 { transition-delay: 300ms; }
+    .delay-400 { transition-delay: 400ms; }
+    .delay-500 { transition-delay: 500ms; }
+    .delay-700 { transition-delay: 700ms; }
+}
+
+/* ============================================================
+   4. CUSTOM SCROLLBAR (Global & Internal)
+   ============================================================ */
+/* Applying scrollbar styles to the whole body for a cohesive look */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #030712;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(16, 185, 129, 0.2);
+    border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #10b981;
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(16, 185, 129, 0.2) transparent;
+}
+
+/* ============================================================
+   5. GOOGLE TRANSLATE CLEANUP
+   ============================================================ */
+.goog-logo-link,
+.goog-te-gadget,
+.goog-te-combo,
+.goog-te-banner-frame,
+.skiptranslate {
+    display: none !important;
+}
+
+.goog-text-highlight {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+iframe.goog-te-banner-frame {
+    display: none !important;
+}
+
+body {
+    position: static !important;
+}
