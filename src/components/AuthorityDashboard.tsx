@@ -13,6 +13,7 @@ export default function AuthorityDashboard({ onNavigate }: { onNavigate: (page: 
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    // Triggers entry animations
     setLoaded(true);
   }, []);
 
@@ -61,8 +62,8 @@ export default function AuthorityDashboard({ onNavigate }: { onNavigate: (page: 
   return (
     <div className="h-screen w-full bg-[#030712] text-slate-100 overflow-hidden font-sans flex flex-col p-8 lg:p-10 relative box-border">
       
-      {/* Background Visual Accents */}
-      <div className="absolute inset-0 pointer-events-none">
+      {/* Background Visual Accents - Ambient Glow */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-5%] left-[10%] w-[45%] h-[45%] bg-blue-600/10 blur-[150px] rounded-full animate-pulse opacity-50" />
         <div className="absolute bottom-[-5%] right-[10%] w-[45%] h-[45%] bg-emerald-600/10 blur-[150px] rounded-full animate-pulse opacity-50" />
       </div>
@@ -70,17 +71,23 @@ export default function AuthorityDashboard({ onNavigate }: { onNavigate: (page: 
       <div className="relative z-10 w-full max-w-[1500px] mx-auto h-full flex flex-col gap-8">
         
         {/* Header Section */}
-        <header className={`flex justify-between items-end shrink-0 transition-all duration-1000 ease-premium ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-12'}`}>
+        <header className={`flex justify-between items-end shrink-0 transition-all duration-1000 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-12'}`}>
           <div className="space-y-1">
-            <h1 className="text-4xl font-black tracking-tight text-white uppercase ">Judicial Intelligence Cockpit</h1>
-            <p className="text-emerald-500 font-bold text-[10px] tracking-[0.4em] uppercase"> Secure Access Mode</p>
+            <h1 className="text-4xl font-black tracking-tight text-white uppercase italic">Judicial Intelligence Cockpit</h1>
+            <p className="text-emerald-500 font-bold text-[10px] tracking-[0.4em] uppercase"> Secure Access Mode // Terminal Active</p>
           </div>
           <div className="flex gap-4">
-            <button onClick={() => onNavigate('authority-cases')} className="px-10 py-3 bg-emerald-500 text-slate-950 font-black text-xs rounded-xl hover:bg-emerald-400 transition-all shadow-xl active:scale-95">
-              BROWSE CASES
+            <button 
+              onClick={() => onNavigate('authority-cases')} 
+              className="px-10 py-3 bg-emerald-500 text-slate-950 font-black text-xs rounded-xl hover:bg-emerald-400 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)] active:scale-95 uppercase tracking-tighter"
+            >
+              Browse Case Files
             </button>
-            <button onClick={exportPDF} className="px-10 py-3 bg-slate-800/80 border border-white/20 text-xs font-black rounded-xl hover:bg-slate-700 transition-all uppercase tracking-widest text-emerald-400">
-              DOWNLOAD PDF
+            <button 
+              onClick={exportPDF} 
+              className="px-10 py-3 bg-slate-800/80 border border-white/20 text-xs font-black rounded-xl hover:bg-slate-700 transition-all uppercase tracking-widest text-emerald-400"
+            >
+              Download Ledger
             </button>
           </div>
         </header>
@@ -88,10 +95,10 @@ export default function AuthorityDashboard({ onNavigate }: { onNavigate: (page: 
         {/* Metrics Section */}
         <div className="grid grid-cols-4 gap-6 shrink-0">
           {stats.map((s, i) => (
-            <div key={i} className={`transition-all duration-700 ease-premium ${s.delay} ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'}`}>
-              <div className="bg-slate-900/50 border border-white/10 backdrop-blur-3xl p-8 rounded-[2rem] shadow-2xl transition-all hover:border-white/20">
-                <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.2em] mb-4">{s.label}</p>
-                <div className={`text-6xl font-black tracking-tighter ${s.color}`}>
+            <div key={i} className={`transition-all duration-700 ease-out ${s.delay} ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'}`}>
+              <div className="bg-slate-900/50 border border-white/10 backdrop-blur-3xl p-8 rounded-[2rem] shadow-2xl transition-all hover:border-white/20 hover:scale-[1.02] group">
+                <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.2em] mb-4 group-hover:text-white transition-colors">{s.label}</p>
+                <div className={`text-6xl font-black tracking-tighter ${s.color} drop-shadow-2xl`}>
                   {s.value}
                 </div>
               </div>
@@ -99,28 +106,43 @@ export default function AuthorityDashboard({ onNavigate }: { onNavigate: (page: 
           ))}
         </div>
 
-        {/* Ledger & Alerts */}
-        <div className={`grid grid-cols-12 gap-8 min-h-0 flex-1 pb-4 transition-all duration-1000 delay-700 ease-premium ${loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-          <div className="col-span-8 bg-slate-900/30 border border-white/10 rounded-[2.5rem] p-10 flex flex-col min-h-0 relative shadow-2xl overflow-hidden">
-            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white mb-8 italic">Official Case Ledger</h3>
+        {/* Ledger & Alerts Area */}
+        <div className={`grid grid-cols-12 gap-8 min-h-0 flex-1 pb-4 transition-all duration-1000 delay-700 ease-out ${loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+          
+          {/* Main Ledger Table */}
+          <div className="col-span-8 bg-[#0a0f1d]/60 border border-white/5 rounded-[2.5rem] p-10 flex flex-col min-h-0 relative shadow-2xl backdrop-blur-md">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white italic">Official Case Ledger</h3>
+              <div className="h-[2px] w-24 bg-gradient-to-r from-emerald-500 to-transparent opacity-30" />
+            </div>
+
             <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
               <table className="w-full text-left border-separate border-spacing-y-3">
-                <thead className="sticky top-0 bg-[#070b14] z-20">
-                  <tr className="text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                    <th className="pb-4 pl-4">Reference</th>
-                    <th className="pb-4">Status</th>
-                    <th className="pb-4 text-center">Entry</th>
+                <thead className="sticky top-0 bg-[#070b14]/90 backdrop-blur-md z-20">
+                  <tr className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                    <th className="pb-4 pl-4">Reference ID</th>
+                    <th className="pb-4">Current Status</th>
+                    <th className="pb-4 text-center">Last Entry</th>
                     <th className="pb-4 text-right pr-4">Action</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
                   {caseData.map((row, i) => (
-                    <tr key={i} className="group bg-white/[0.02] hover:bg-white/[0.08] transition-all duration-300">
+                    <tr key={i} className="group bg-white/[0.01] hover:bg-emerald-500/[0.05] transition-all duration-300">
                       <td className="py-6 pl-6 rounded-l-2xl font-bold text-white border-y border-l border-white/5">{row.id}</td>
-                      <td className="py-6 border-y border-white/5 font-bold text-emerald-400/80 tracking-tighter uppercase">{row.status}</td>
+                      <td className="py-6 border-y border-white/5">
+                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-black rounded-lg border border-emerald-500/20 uppercase tracking-tighter">
+                          {row.status}
+                        </span>
+                      </td>
                       <td className="py-6 text-center text-slate-300 font-mono font-bold border-y border-white/5">{row.date}</td>
                       <td className="py-6 pr-6 rounded-r-2xl text-right border-y border-r border-white/5">
-                        <button onClick={() => onNavigate('authority-cases')} className="text-[10px] font-black text-emerald-400/40 hover:text-emerald-400 transition-colors uppercase">Details</button>
+                        <button 
+                          onClick={() => onNavigate('authority-cases')} 
+                          className="px-4 py-2 text-[10px] font-black bg-white/5 hover:bg-white/10 text-emerald-400 rounded-lg transition-all uppercase tracking-widest"
+                        >
+                          Details
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -129,26 +151,46 @@ export default function AuthorityDashboard({ onNavigate }: { onNavigate: (page: 
             </div>
           </div>
 
-          <div className="col-span-4 bg-slate-950/60 border border-white/10 rounded-[2.5rem] p-10 flex flex-col shadow-2xl">
+          {/* Side Alerts Panel */}
+          <div className="col-span-4 bg-[#0a0f1d]/80 border border-white/5 rounded-[2.5rem] p-10 flex flex-col shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-[60px] rounded-full" />
+            
             <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white mb-10 italic">Priority Review</h3>
+            
             <div className="space-y-8 flex-1">
               {[
                 { title: 'Affidavit Verification Required', time: '2H', color: 'bg-emerald-500' },
                 { title: 'Signature Discrepancy Found', time: '5H', color: 'bg-amber-500' },
                 { title: 'New Evidence Submitted', time: '1D', color: 'bg-blue-500' },
+                { title: 'Urgent Hearing Request', time: '20M', color: 'bg-purple-500' },
               ].map((alert, i) => (
-                <div key={i} className="flex gap-6 group cursor-pointer p-4 rounded-xl hover:bg-white/5 transition-all">
+                <div key={i} className="flex gap-6 group cursor-pointer p-4 rounded-2xl hover:bg-white/5 transition-all border border-transparent hover:border-white/10">
                   <div className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${alert.color} shadow-[0_0_15px_currentcolor] animate-pulse`} />
                   <div>
-                    <p className="text-xs font-bold text-slate-100 group-hover:text-emerald-400 transition-colors tracking-tight leading-tight">{alert.title}</p>
-                    <span className="text-[10px] text-slate-500 font-black mt-2 block tracking-widest uppercase">{alert.time} AGO</span>
+                    <p className="text-xs font-bold text-slate-200 group-hover:text-emerald-400 transition-colors tracking-tight leading-tight">{alert.title}</p>
+                    <span className="text-[10px] text-slate-600 font-black mt-2 block tracking-widest uppercase">{alert.time} AGO</span>
                   </div>
                 </div>
               ))}
             </div>
+
+            <div className="mt-8 pt-8 border-t border-white/5">
+              <div className="bg-emerald-500/5 p-6 rounded-2xl border border-emerald-500/10">
+                <p className="text-[10px] font-black text-emerald-500/60 uppercase tracking-widest mb-2">System Status</p>
+                <p className="text-xs font-bold text-slate-300 italic">"All judicial nodes operational. Data integrity at 100%."</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Global Scrollbar Style */}
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.5); }
+      `}</style>
     </div>
   );
 }

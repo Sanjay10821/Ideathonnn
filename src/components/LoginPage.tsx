@@ -1,172 +1,275 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Fingerprint, ArrowRight, ShieldCheck, Search, ChevronDown, UserPlus, LogIn, Calendar, Users } from 'lucide-react';
 import Navigation from './Navigation';
 
-export default function LoginPage({ 
-  onLoginSuccess, 
-  onNavigate 
-}: { 
+export default function LoginPage({ onLoginSuccess, onNavigate }: {
   onLoginSuccess?: (target?: any) => void;
   onNavigate: (p: any) => void;
 }) {
   const { t } = useTranslation();
-  const [nextTarget, setNextTarget] = useState<'home' | 'tracking'>('home');
+
+  // Mode & State
+  const [authMode, setAuthMode] = useState<'identity' | 'cnr'>('identity');
   const [isNewUser, setIsNewUser] = useState(false);
+  const [isShaking, setIsShaking] = useState(false);
+  
+  // Input Fields
   const [docType, setDocType] = useState('aadhaar');
   const [idNumber, setIdNumber] = useState('');
   const [cnrNumber, setCnrNumber] = useState('');
-  const [cnrYear, setCnrYear] = useState<number>(2024);
-  const [cnrStatus, setCnrStatus] = useState<'Pending' | 'Disposed' | 'Both'>('Both');
+  const [pin, setPin] = useState(''); 
   const [fullName, setFullName] = useState('');
-  const [pin, setPin] = useState('');
+  
+  // ✅ NEW FIELDS FOR EXPANDED PROFILE
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState('');
 
-  // 🛠️ Dynamic Validation Configuration
-  const getDocRequirements = () => {
-    switch(docType) {
-      case 'aadhaar': return { length: 12, placeholder: '12 Digit Aadhaar No.', pattern: '[0-9]{12}' };
-      case 'voter': return { length: 10, placeholder: '10 Character Voter ID', pattern: '[A-Z0-9]{10}' };
-      case 'ration': return { length: 12, placeholder: '12 Character Ration ID', pattern: '[A-Z0-9]{12}' };
-      default: return { length: 16, placeholder: 'Enter ID', pattern: '.*' };
-    }
+  // Biometric Flow
+  const [showBioModal, setShowBioModal] = useState(false);
+  const [bioVerified, setBioVerified] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+
+  // Dynamic Validation Logic
+  const getDocLimit = () => {
+    if (docType === 'aadhaar') return 12;
+    if (docType === 'voter' || docType === 'pan') return 10;
+    return 16;
   };
 
-  const docReq = getDocRequirements();
+  const triggerShake = () => {
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 500);
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleVerifyClick = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check CNR length if that target is selected
-    if (nextTarget === 'tracking' && cnrNumber.length !== 16) {
-      alert("CNR Number must be exactly 16 characters.");
+    const isCnrInvalid = authMode === 'cnr' && cnrNumber.length < 16;
+    const isIdInvalid = authMode === 'identity' && idNumber.length !== getDocLimit();
+    const isPinInvalid = pin.length !== 6;
+    const isNameInvalid = isNewUser && fullName.trim().length < 3;
+    // ✅ NEW VALIDATION
+    const isDemographicsInvalid = isNewUser && (!age || !gender);
+
+    if (isCnrInvalid || isIdInvalid || isPinInvalid || isNameInvalid || isDemographicsInvalid) {
+      triggerShake();
       return;
     }
 
-    // Check Government ID length
-    if (nextTarget === 'home' && idNumber.length !== docReq.length) {
-      alert(`${docType.toUpperCase()} must be exactly ${docReq.length} characters.`);
-      return;
-    }
+    setShowBioModal(true);
+  };
 
-    if (onLoginSuccess) {
-      onLoginSuccess(nextTarget === 'tracking' ? 'tracking' : 'home');
-    } else {
-      onNavigate(nextTarget === 'tracking' ? 'tracking' : 'home');
-    }
+  const simulateScan = () => {
+    setIsScanning(true);
+    setTimeout(() => {
+      setIsScanning(false);
+      setBioVerified(true);
+    }, 2000);
+  };
+
+  const handleFinalSuccess = () => {
+    const target = authMode === 'cnr' ? 'tracking' : 'home';
+    onLoginSuccess ? onLoginSuccess(target) : onNavigate(target);
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#020617] overflow-hidden">
-      <Navigation currentPage="login" onNavigate={onNavigate} compact={true} />
+    <div className="h-screen w-screen flex flex-col bg-[#030712] overflow-hidden font-sans">
+      <Navigation currentPage="login" onNavigate={onNavigate} compact />
 
-      <main className="relative z-10 flex-1 flex items-center justify-center px-6">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-500/[0.02] blur-[160px] rounded-full animate-pulse" />
-        </div>
-
-        <div className="w-full max-w-lg p-[1px] rounded-[3rem] bg-gradient-to-b from-white/20 via-white/5 to-transparent shadow-2xl relative">
-          <div className="w-full h-full p-10 sm:p-12 rounded-[2.9rem] bg-[#020617]/90 backdrop-blur-3xl relative overflow-hidden">
-            
-            <div className="text-center mb-10">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-emerald-500/10 mb-6 border border-emerald-500/20 shadow-inner">
-                <svg className="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-              <h2 className="text-4xl font-black text-white mb-2 uppercase tracking-tighter">
-                {isNewUser ? "Register" : "Access Portal"}
-              </h2>
+      <main className="flex-1 flex items-center justify-center px-6">
+        <div className={`w-full max-w-lg bg-[#0a0f1d] rounded-[2.5rem] p-10 border border-white/5 shadow-2xl relative transition-all duration-500 ${isShaking ? 'animate-shake' : ''}`}>
+          
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+              {isNewUser ? (
+                <UserPlus className="w-10 h-10 text-emerald-400 animate-in zoom-in duration-300" />
+              ) : (
+                <ShieldCheck className="w-10 h-10 text-emerald-400 animate-in zoom-in duration-300" />
+              )}
             </div>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {nextTarget === 'tracking' ? (
-                <div className="space-y-4">
+          <h2 className="text-4xl font-black text-white text-center uppercase tracking-tighter mb-10">
+            {isNewUser ? 'Create Account' : 'Access Portal'}
+          </h2>
+
+          <form onSubmit={handleVerifyClick} className="space-y-6">
+            
+            {/* ✅ EXPANDED REGISTRATION SECTION */}
+            {isNewUser && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest ml-1">Full Legal Name</label>
+                  <input 
+                    type="text" required placeholder="Justice / Citizen Name"
+                    className="w-full bg-[#111827] border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-emerald-500/50 outline-none transition"
+                    onChange={(e) => setFullName(e.target.value)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-emerald-500/70 ml-5">CNR Number (16 Digits)</label>
-                    <input
-                      type="text"
-                      required
-                      maxLength={16}
-                      value={cnrNumber}
-                      onChange={(e) => setCnrNumber(e.target.value.toUpperCase())}
-                      placeholder="e.g. MHTH010000012023"
-                      className="w-full bg-white/5 border border-white/10 text-white rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-emerald-500/50 outline-none font-mono"
+                    <label className="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest ml-1">Age</label>
+                    <input 
+                      type="number" required placeholder="Years"
+                      className="w-full bg-[#111827] border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-emerald-500/50 outline-none transition"
+                      onChange={(e) => setAge(e.target.value)}
                     />
                   </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-emerald-500/70 ml-5">Document</label>
+                    <label className="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest ml-1">Gender</label>
+                    <div className="relative">
+                      <select 
+                        required
+                        value={gender}
+                        onChange={(e) => setGender(e.target.value)}
+                        className="w-full bg-[#111827] border border-white/10 rounded-2xl px-6 py-4 text-emerald-400 font-bold text-sm focus:border-emerald-500/50 outline-none appearance-none cursor-pointer">
+                        <option value="">Select</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                      <ChevronDown className="absolute right-4 top-4 w-4 h-4 text-emerald-500/50 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className={`grid ${authMode === 'identity' ? 'grid-cols-2' : 'grid-cols-1'} gap-4 transition-all duration-300`}>
+              {authMode === 'identity' && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-left-4 duration-500">
+                  <label className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest ml-1">Document</label>
+                  <div className="relative">
                     <select 
                       value={docType}
                       onChange={(e) => { setDocType(e.target.value); setIdNumber(''); }}
-                      className="w-full bg-slate-900 border border-white/10 text-emerald-400 font-bold rounded-2xl px-5 py-4 text-xs outline-none"
-                    >
+                      className="w-full bg-[#111827] border border-white/10 rounded-2xl px-4 py-4 text-emerald-400 font-bold text-sm focus:border-emerald-500/50 outline-none appearance-none cursor-pointer">
                       <option value="aadhaar">Aadhaar Card</option>
                       <option value="voter">Voter ID</option>
-                      <option value="ration">Ration Card</option>
+                      <option value="pan">PAN Card</option>
                     </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-emerald-500/70 ml-5">ID Number</label>
-                    <input 
-                      type="text" 
-                      required 
-                      maxLength={docReq.length}
-                      value={idNumber}
-                      onChange={(e) => setIdNumber(e.target.value)}
-                      placeholder={docReq.placeholder}
-                      className="w-full bg-white/5 border border-white/10 text-white rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all font-mono" 
-                    />
+                    <ChevronDown className="absolute right-4 top-4 w-4 h-4 text-emerald-500/50 pointer-events-none" />
                   </div>
                 </div>
               )}
-
+              
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-emerald-500/70 ml-5">Security PIN</label>
-                <input 
-                  type="password" 
-                  required 
-                  maxLength={6}
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                  placeholder="••••••"
-                  className="w-full bg-white text-slate-900 rounded-2xl px-6 py-4 text-xl text-center tracking-[1.2em] font-black focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all shadow-xl" 
-                />
-              </div>
-
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <div className="flex flex-col gap-2 text-[10px] font-black uppercase tracking-wider text-slate-400">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="post" checked={nextTarget === 'home'} onChange={() => setNextTarget('home')} className="accent-emerald-500" />
-                    Identity Login
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="post" checked={nextTarget === 'tracking'} onChange={() => setNextTarget('tracking')} className="accent-emerald-500" />
-                    CNR Search
-                  </label>
+                <label className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest ml-1">
+                  {authMode === 'identity' ? 'ID Number' : 'CNR Number'}
+                </label>
+                <div className="relative">
+                  <input 
+                    type="text" required
+                    maxLength={authMode === 'identity' ? getDocLimit() : 16}
+                    placeholder={authMode === 'identity' ? `${getDocLimit()} Digit No.` : "16 Digit CNR Number"}
+                    value={authMode === 'identity' ? idNumber : cnrNumber}
+                    onChange={(e) => authMode === 'identity' ? setIdNumber(e.target.value) : setCnrNumber(e.target.value.toUpperCase())}
+                    className="w-full bg-[#111827] border border-white/10 rounded-2xl px-6 py-4 text-white font-mono focus:border-emerald-500/50 outline-none transition"
+                  />
+                  {authMode === 'cnr' && <Search className="absolute right-4 top-4 text-emerald-500/30 w-5 h-5" />}
                 </div>
-
-                <button type="submit" className="group relative w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-[0.3em] text-xs transition-all shadow-lg active:scale-95">
-                  <span className="flex items-center justify-center gap-3">
-                    {isNewUser ? "Register" : "Verify"}
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7-7 7M3 12h18" />
-                    </svg>
-                  </span>
-                </button>
               </div>
-            </form>
+            </div>
 
-            <div className="text-center mt-10">
-              <button onClick={() => setIsNewUser(!isNewUser)} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-emerald-400 transition-all">
-                {isNewUser ? "Switch to Secure Login" : "First Time? Create Legal Account"}
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest ml-1 text-center block">Security PIN (6 Digits)</label>
+              <div className="relative group">
+                <input 
+                  type="password" required maxLength={6} value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                  className="w-full bg-white text-transparent rounded-2xl py-5 text-center text-3xl tracking-[1.5em] font-black focus:ring-4 ring-emerald-500/20 outline-none transition caret-transparent"
+                  placeholder=" "
+                />
+                <div className="absolute inset-0 flex items-center justify-between px-[15%] pointer-events-none">
+                  {[...Array(6)].map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                        pin.length > i ? 'bg-[#0a0f1d] scale-110 shadow-sm' : 'bg-slate-300 scale-90 opacity-50'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <div className="space-y-3 min-w-[120px]">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input type="radio" name="mode" checked={authMode === 'identity'} onChange={() => setAuthMode('identity')} className="hidden" />
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${authMode === 'identity' ? 'border-emerald-400 bg-emerald-400/20' : 'border-slate-600'}`}>
+                    {authMode === 'identity' && <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full" />}
+                  </div>
+                  <span className={`text-[10px] font-black uppercase leading-tight ${authMode === 'identity' ? 'text-white' : 'text-slate-500'}`}>Identity<br/>Login</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input type="radio" name="mode" checked={authMode === 'cnr'} onChange={() => setAuthMode('cnr')} className="hidden" />
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${authMode === 'cnr' ? 'border-emerald-400 bg-emerald-400/20' : 'border-slate-600'}`}>
+                    {authMode === 'cnr' && <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full" />}
+                  </div>
+                  <span className={`text-[10px] font-black uppercase leading-tight ${authMode === 'cnr' ? 'text-white' : 'text-slate-500'}`}>CNR<br/>Search</span>
+                </label>
+              </div>
+
+              <button 
+                type="submit"
+                className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-[#020617] py-5 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(16,185,129,0.4)]">
+                {isNewUser ? 'Create Profile' : 'Verify'} <ArrowRight className="w-5 h-5" />
               </button>
             </div>
+          </form>
+
+          <div className="mt-10 text-center">
+            <button 
+              onClick={() => setIsNewUser(!isNewUser)} 
+              className="group flex items-center justify-center gap-2 mx-auto text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-emerald-400 transition"
+            >
+              {isNewUser ? <LogIn className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
+              {isNewUser ? 'Back to Secure Login' : 'First Time? Create Legal Account'}
+            </button>
           </div>
         </div>
       </main>
+
+      {showBioModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#020617]/95 backdrop-blur-xl px-6 transition-all duration-500">
+          <div className="w-full max-w-sm bg-[#0a0f1d] border border-emerald-500/30 rounded-[3rem] p-10 text-center shadow-[0_0_100px_rgba(16,185,129,0.15)] relative overflow-hidden">
+            {!bioVerified ? (
+              <div className="animate-in fade-in zoom-in-95 duration-500">
+                <div className="relative inline-block mb-10">
+                  <div className={`absolute inset-0 bg-emerald-500/20 rounded-full blur-2xl transition-opacity duration-1000 ${isScanning ? 'opacity-100' : 'opacity-40'}`} />
+                  <Fingerprint className={`w-24 h-24 relative z-10 transition-colors duration-500 ${isScanning ? 'text-emerald-300' : 'text-emerald-500/40'}`} />
+                  {isScanning && <div className="absolute top-0 left-0 w-full h-[2px] bg-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.8)] animate-scan z-20" />}
+                </div>
+                <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Kiosk Verification</h3>
+                <p className="text-slate-400 text-[11px] leading-relaxed font-bold uppercase tracking-widest px-4">Place thumb on kiosk sensor.</p>
+                <button onClick={simulateScan} disabled={isScanning} className={`mt-10 w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${isScanning ? 'bg-slate-800 text-slate-500' : 'bg-emerald-500 text-[#020617]'}`}>
+                  {isScanning ? 'Analyzing Patterns...' : 'Initialize Scan'}
+                </button>
+              </div>
+            ) : (
+              <div className="animate-in fade-in zoom-in-95 duration-700 py-6">
+                <div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 rotate-6 shadow-[0_20px_40px_rgba(16,185,129,0.4)]">
+                  <ShieldCheck className="w-12 h-12 text-[#020617]" />
+                </div>
+                <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">Identity<br/>Confirmed</h3>
+                <button onClick={handleFinalSuccess} className="mt-12 w-full py-5 bg-white text-[#020617] rounded-2xl font-black uppercase tracking-[0.3em] text-xs hover:bg-slate-200 shadow-xl transition-all">
+                  Launch Portal
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes scan { 0% { top: 0; opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); } 20%, 40%, 60%, 80% { transform: translateX(6px); } }
+        .animate-scan { animation: scan 2s linear infinite; }
+        .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+      `}</style>
     </div>
   );
 }

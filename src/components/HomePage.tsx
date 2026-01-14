@@ -1,66 +1,167 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Sparkles, ArrowRight, X } from 'lucide-react';
 import Navigation from './Navigation';
 
 export default function HomePage({
   onNavigate,
 }: {
-  onNavigate: (p: 'home' | 'chatbot' | 'features' | 'tracking' | 'impact' | 'kiosk') => void;
+  onNavigate: (
+    p: 'home' | 'chatbot' | 'features' | 'tracking' | 'impact' | 'kiosk'
+  ) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
-  // 🔧 SINGLE SOURCE OF TRUTH for opening chat
+  // Tutorial State
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [step, setStep] = useState(0);
+
+  // Check if user is new
+  useEffect(() => {
+    const hasSeen = localStorage.getItem('has_seen_home_tutorial');
+    if (!hasSeen) setShowTutorial(true);
+  }, []);
+
+  const finishTutorial = () => {
+    localStorage.setItem('has_seen_home_tutorial', 'true');
+    setShowTutorial(false);
+  };
+
+  const tutorialSteps = [
+    {
+      title: t('tut_title_1'),
+      desc: t('tut_desc_1'),
+      btn: t('tut_btn_start'),
+    },
+    {
+      title: t('tut_title_2'),
+      desc: t('tut_desc_2'),
+      btn: t('tut_btn_next'),
+    },
+    {
+      title: t('tut_title_3'),
+      desc: t('tut_desc_3'),
+      btn: t('tut_btn_finish'),
+    },
+  ];
+
   const handleOpenChat = () => {
     window.dispatchEvent(new Event('open-chat'));
   };
 
   return (
-    <div className="h-screen w-screen bg-[#020617] text-slate-200 font-sans overflow-hidden">
-      {/* Background lighting */}
+    <div className="h-screen w-screen bg-[#020617] text-slate-200 overflow-hidden">
+      {/* Background glow */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-[45%] h-[45%] bg-emerald-600/[0.04] blur-[140px]" />
         <div className="absolute bottom-0 left-0 w-[45%] h-[45%] bg-blue-600/[0.04] blur-[140px]" />
       </div>
 
-      {/* Navigation */}
+      {/* ---------------- TUTORIAL ---------------- */}
+      {showTutorial && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
+          <div className="relative w-full max-w-md bg-[#0b1328] border border-emerald-500/30 rounded-[2.5rem] p-10 shadow-xl">
+            <button
+              onClick={finishTutorial}
+              className="absolute top-6 right-6 text-slate-500 hover:text-white"
+            >
+              <X />
+            </button>
+
+            <div className="space-y-6">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                <Sparkles className="text-emerald-400" />
+              </div>
+
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">
+                {t('tutorial_mode')} · {t('step')} {step + 1}
+              </p>
+
+              <h3 className="text-3xl font-black text-white uppercase italic">
+                {tutorialSteps[step].title}
+              </h3>
+
+              <p className="text-slate-400">{tutorialSteps[step].desc}</p>
+
+              <div className="flex justify-between pt-4">
+                <button
+                  onClick={finishTutorial}
+                  className="text-xs uppercase text-slate-500 hover:text-white"
+                >
+                  {t('skip')}
+                </button>
+
+                <button
+                  onClick={() =>
+                    step < tutorialSteps.length - 1
+                      ? setStep(step + 1)
+                      : finishTutorial()
+                  }
+                  className="px-8 py-3 bg-emerald-600 rounded-xl text-xs font-black uppercase flex items-center gap-2"
+                >
+                  {tutorialSteps[step].btn} <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------- PAGE ---------------- */}
       <Navigation currentPage="home" onNavigate={onNavigate} />
 
-      {/* PAGE CONTENT */}
-      <main className="relative z-10 h-full flex flex-col items-center pt-28 px-6 overflow-y-auto">
-        {/* HERO */}
-        <section className="flex flex-col items-center text-center max-w-3xl space-y-10 mb-16">
-          <h1 className="text-5xl sm:text-6xl font-black text-white leading-tight">
+      <main
+        className={`relative z-10 h-full flex flex-col items-center pt-28 px-6 overflow-y-auto transition ${
+          showTutorial ? 'blur-md scale-95' : ''
+        }`}
+      >
+        {/* Hero */}
+        <section className="max-w-3xl text-center space-y-10 mb-16">
+          <h1 className="text-5xl sm:text-6xl font-black text-white">
             {t('bridge_to_justice')}
           </h1>
 
-          <p className="text-slate-400 text-base sm:text-lg leading-relaxed">
-            {t('hero_description')}
-          </p>
+          <p className="text-slate-400">{t('hero_description')}</p>
 
-          {/* ✅ LAUNCH → KIOSK DEMO */}
           <button
             onClick={() => onNavigate('kiosk')}
-            className="px-16 py-4 rounded-xl bg-emerald-600 text-xs font-black uppercase tracking-[0.25em] hover:bg-emerald-500 transition shadow-[0_10px_40px_rgba(16,185,129,0.35)]"
+            className="px-16 py-4 bg-emerald-600 rounded-xl text-xs font-black uppercase tracking-widest"
           >
-            Launch System
+            {t('launch_system')}
           </button>
         </section>
 
-        {/* CORE MODULES */}
+        {/* ---------------- MODULES ---------------- */}
         <section className="w-full max-w-6xl pb-20">
           <div className="flex items-center gap-6 mb-16">
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-            <span className="text-[16px] font-black tracking-[0.4em] uppercase text-white">
-              Core Modules
+            <div className="flex-1 h-px bg-white/20" />
+            <span className="uppercase tracking-[0.4em] font-black">
+              {t('core_modules')}
             </span>
-            <div className="h-px flex-1 bg-gradient-to-l from-transparent via-white/30 to-transparent" />
+            <div className="flex-1 h-px bg-white/20" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          {/* 🔥 KEY FIX: key={i18n.language} */}
+          <div
+            key={i18n.language}
+            className="grid grid-cols-1 md:grid-cols-3 gap-12"
+          >
             {[
-              { id: 'tracking', title: 'Case Tracking', desc: 'Track cases with full transparency and accountability' },
-              { id: 'features', title: 'Features', desc: 'Explore AI-powered system features and workflows' },
-              { id: 'chatbot', title: 'Chatbot', desc: 'Chat with an assistant to get guidance and intake help' },
+              {
+                id: 'tracking',
+                title: t('case_tracking'),
+                desc: t('track_desc'),
+              },
+              {
+                id: 'features',
+                title: t('features_nav'),
+                desc: t('feat_desc'),
+              },
+              {
+                id: 'chatbot',
+                title: t('chatbot_nav'),
+                desc: t('chat_desc'),
+              },
             ].map((item) => (
               <button
                 key={item.id}
@@ -69,19 +170,14 @@ export default function HomePage({
                     ? handleOpenChat()
                     : onNavigate(item.id as any)
                 }
-                className="group relative text-left px-12 py-14 rounded-[2.25rem] bg-gradient-to-b from-[#0b1328] to-[#060b16] ring-2 ring-white/20 hover:ring-emerald-400/70 transition-all duration-500 hover:-translate-y-2"
+                className="group text-left px-12 py-14 rounded-[2.25rem] bg-gradient-to-b from-[#0b1328] to-[#060b16] ring-2 ring-white/20 hover:ring-emerald-400 transition"
               >
-                {/* Glow on hover */}
-                <div className="absolute inset-0 rounded-[2.25rem] opacity-0 group-hover:opacity-100 transition">
-                  <div className="absolute inset-0 bg-emerald-500/15 blur-3xl" />
-                </div>
-
-                <div className="relative z-10 space-y-4">
-                  <h3 className="text-2xl font-bold text-white">{item.title}</h3>
-                  <p className="text-slate-400 leading-relaxed max-w-sm">{item.desc}</p>
-                  <div className="pt-6 text-[10px] font-black uppercase tracking-[0.35em] text-emerald-400">
-                    Open Module →
-                  </div>
+                <h3 className="text-2xl font-bold text-white">
+                  {item.title}
+                </h3>
+                <p className="text-slate-400 mt-2">{item.desc}</p>
+                <div className="pt-6 text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                  {t('open_module')} →
                 </div>
               </button>
             ))}
