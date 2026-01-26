@@ -67,7 +67,7 @@ export default function Navigation({
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer group"
                 onClick={() => onNavigate('home')}
               >
-                <span className="text-xl italic text-white group-hover:text-emerald-400 transition">
+                <span className="text-2xl italic text-white group-hover:text-emerald-400 transition">
                   Legal
                 </span>
                 <span className="text-2xl font-black text-emerald-500 uppercase tracking-tight group-hover:text-white transition">
@@ -79,10 +79,10 @@ export default function Navigation({
                 className="flex-none flex gap-1 cursor-pointer group"
                 onClick={() => onNavigate('home')}
               >
-                <span className="text-xl italic text-white group-hover:text-emerald-400 transition">
+                <span className="text-2xl italic text-white group-hover:text-emerald-400 transition">
                   Legal
                 </span>
-                <span className="text-xl font-black text-emerald-500 uppercase tracking-tight group-hover:text-white transition">
+                <span className="text-2xl font-black text-emerald-500 uppercase tracking-tight group-hover:text-white transition">
                   Edge
                 </span>
               </div>
@@ -93,15 +93,16 @@ export default function Navigation({
                 {items.map((item) => {
                   const active = currentPage === item.id;
                   return (
-                    <button
-                      key={item.id}
-                      onClick={() => onNavigate(item.id as Page)}
-                      className={`text-[10px] font-black uppercase tracking-[0.25em] transition ${
-                        active
-                          ? 'text-emerald-500 border-b border-emerald-500 pb-1'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
+                   <button
+  key={item.id}
+  onClick={() => onNavigate(item.id as Page)}
+  className={`text-xs font-black uppercase tracking-[0.22em] transition ${
+    active
+      ? 'text-emerald-500 border-b border-emerald-500 pb-1'
+      : 'text-slate-400 hover:text-white'
+  }`}
+>
+
                       {item.label}
                     </button>
                   );
@@ -126,7 +127,7 @@ export default function Navigation({
               {!compact && (
                 <button
                   onClick={() => setShowChat(true)}
-                  className="px-3 py-2 bg-emerald-600 text-white text-xs font-bold rounded-md hover:bg-emerald-500 transition"
+                  className="px-3 py-2 bg-emerald-600 text-white text-sm font-bold rounded-md hover:bg-emerald-500 transition"
                 >
                   Chat
                 </button>

@@ -30,6 +30,10 @@ declare global {
 export default function KioskDemo({ onNavigate }: KioskDemoProps) {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [activePanel, setActivePanel] = useState<
+    'home' | 'orders' | 'cause' | 'helpdesk'
+  >('home');
+
   const recognitionRef = useRef<any>(null);
 
   /* ----------------------------------
@@ -39,13 +43,10 @@ export default function KioskDemo({ onNavigate }: KioskDemoProps) {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    if (!SpeechRecognition) {
-      console.warn('Speech Recognition not supported');
-      return;
-    }
+    if (!SpeechRecognition) return;
 
     const recognition = new SpeechRecognition();
-    recognition.lang = 'en-IN'; // change to hi-IN, ta-IN, etc
+    recognition.lang = 'en-IN';
     recognition.continuous = false;
     recognition.interimResults = true;
 
@@ -62,24 +63,14 @@ export default function KioskDemo({ onNavigate }: KioskDemoProps) {
       setTranscript(text);
     };
 
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognition.onerror = () => {
-      setIsListening(false);
-    };
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
 
     recognitionRef.current = recognition;
   }, []);
 
-  /* ----------------------------------
-     START / STOP LISTENING
-  ---------------------------------- */
   const startListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.start();
-    }
+    recognitionRef.current?.start();
   };
 
   return (
@@ -107,44 +98,88 @@ export default function KioskDemo({ onNavigate }: KioskDemoProps) {
 
             <div className="flex-1 flex overflow-hidden">
               {/* SIDEBAR */}
-              {/* SIDEBAR */}
-<aside className="w-60 bg-slate-50 border-r border-slate-100 p-6 flex flex-col gap-2">
-  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-2">
-    Quick Services
-  </p>
+              <aside className="w-60 bg-slate-50 border-r border-slate-100 p-6 flex flex-col gap-2">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-2">
+                  Quick Services
+                </p>
 
-  {[
-    { icon: Search, label: 'CNR Search', id: 'tracking' },
-    { icon: FileText, label: 'Case Status', id: 'tracking' },
-    { icon: Gavel, label: 'Judicial Orders', id: 'orders' },
-    { icon: List, label: 'Hearing List', id: 'cause' },
-    { icon: Monitor, label: 'Virtual Proceedings', id: 'virtual' },
-  ].map((item) => (
-    <button
-      key={item.id}
-      onClick={() =>
-        item.id === 'tracking' ? onNavigate('tracking') : null
-      }
-      className="
-        flex items-center justify-between
-        px-3 py-3 rounded-xl
-        text-slate-600 hover:bg-emerald-50 hover:text-emerald-700
-        transition-all group
-      "
-    >
-      <div className="flex items-center gap-3">
-        <item.icon className="w-4 h-4 shrink-0" />
-        <span className="text-xs font-semibold whitespace-nowrap">
-          {item.label}
-        </span>
-      </div>
+                {[
+                  { icon: Search, label: 'CNR Search', id: 'tracking' },
+                  { icon: FileText, label: 'Case Status', id: 'tracking' },
+                  { icon: Gavel, label: 'Judicial Orders', id: 'orders' },
+                  { icon: List, label: 'Hearing List', id: 'cause' },
+                  { icon: Monitor, label: 'Virtual Proceedings', id: 'virtual' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      if (item.id === 'tracking') onNavigate('tracking');
+                      if (item.id === 'orders') setActivePanel('orders');
+                      if (item.id === 'cause') setActivePanel('cause');
+                    }}
+                    className="flex items-center justify-between px-3 py-3 rounded-xl text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon className="w-4 h-4" />
+                      <span className="text-xs font-semibold">
+                        {item.label}
+                      </span>
+                    </div>
+                    <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+                  </button>
+                ))}
+              </aside>
 
-      <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-    </button>
-  ))}
-</aside>
               {/* MAIN */}
               <main className="flex-1 px-8 py-8 flex flex-col overflow-y-auto">
+
+                {/* ADDED CONTENT PANEL */}
+                {activePanel !== 'home' && (
+                  <div className="mb-6 p-6 rounded-2xl bg-slate-50 border text-slate-700">
+                    {activePanel === 'orders' && (
+                      <>
+                        <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                          <Gavel className="w-5 h-5 text-emerald-600" />
+                          Judicial Orders
+                        </h2>
+                        <ul className="text-sm space-y-2">
+                          <li>• 12 Feb 2026 – Interim stay granted</li>
+                          <li>• 05 Jan 2026 – Notice issued to respondent</li>
+                          <li>• 18 Dec 2025 – Case admitted</li>
+                        </ul>
+                      </>
+                    )}
+
+                    {activePanel === 'cause' && (
+                      <>
+                        <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                          <List className="w-5 h-5 text-emerald-600" />
+                          Hearing List
+                        </h2>
+                        <ul className="text-sm space-y-2">
+                          <li>• 15 Feb 2026 – Arguments Hearing</li>
+                          <li>• 28 Apr 2026 – Evidence Review</li>
+                          <li>• 10 Jun 2026 – Final Submission</li>
+                        </ul>
+                      </>
+                    )}
+
+                    {activePanel === 'helpdesk' && (
+                      <>
+                        <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                          <Phone className="w-5 h-5 text-emerald-600" />
+                          Contact Helpdesk
+                        </h2>
+                        <p className="text-sm">📞 044-2567-8899</p>
+                        <p className="text-sm">🕘 10:00 AM – 5:00 PM</p>
+                        <p className="text-sm">
+                          📍 Chennai District Court Facilitation Center
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4 flex-1">
                   <MenuCard
                     icon={Search}
@@ -168,7 +203,7 @@ export default function KioskDemo({ onNavigate }: KioskDemoProps) {
                     icon={Phone}
                     title="Contact Helpdesk"
                     subtitle="Court & legal contacts"
-                    onClick={() => {}}
+                    onClick={() => setActivePanel('helpdesk')}
                   />
                 </div>
 
@@ -176,14 +211,11 @@ export default function KioskDemo({ onNavigate }: KioskDemoProps) {
                 <div className="mt-6">
                   <button
                     onClick={startListening}
-                    className={`w-full flex items-center justify-center gap-4 py-4 rounded-2xl
-                      text-xs font-medium uppercase tracking-widest text-white
-                      transition-all
-                      ${
-                        isListening
-                          ? 'bg-emerald-700 animate-pulse'
-                          : 'bg-slate-900 hover:bg-emerald-800'
-                      }`}
+                    className={`w-full flex items-center justify-center gap-4 py-4 rounded-2xl text-xs uppercase tracking-widest text-white ${
+                      isListening
+                        ? 'bg-emerald-700 animate-pulse'
+                        : 'bg-slate-900 hover:bg-emerald-800'
+                    }`}
                   >
                     <div className="p-1.5 rounded-full bg-emerald-500">
                       <Mic className="w-4 h-4" />
@@ -218,7 +250,6 @@ export default function KioskDemo({ onNavigate }: KioskDemoProps) {
 }
 
 /* ---------- MENU CARD ---------- */
-
 function MenuCard({
   icon: Icon,
   title,
@@ -233,17 +264,37 @@ function MenuCard({
   return (
     <button
       onClick={onClick}
-      className="group rounded-[1.5rem] p-[2px] bg-gradient-to-br from-emerald-500/30 to-emerald-500/10 hover:from-emerald-500/50 hover:to-emerald-500/20"
+      className="
+        group
+        rounded-lg
+        p-[2px]
+        bg-gradient-to-br from-emerald-500/25 to-emerald-500/10
+        hover:from-emerald-500/40 hover:to-emerald-500/15
+        transition
+      "
     >
-      <div className="h-full w-full rounded-[1.4rem] bg-white border p-5 flex flex-col items-center justify-center">
-        <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mb-3">
-          <Icon className="w-6 h-6 text-emerald-600" />
+      <div
+        className="
+          h-full w-full
+          rounded-md
+          bg-white border
+          px-6 py-7
+          flex flex-col items-center justify-center
+        "
+      >
+        <div className="w-11 h-11 rounded-md bg-emerald-50 flex items-center justify-center mb-4">
+          <Icon className="w-5 h-5 text-emerald-600" />
         </div>
-        <p className="font-semibold text-slate-800 text-sm uppercase">
+
+        <p className="font-semibold text-slate-800 text-sm uppercase tracking-wide">
           {title}
         </p>
-        <p className="text-[10px] text-slate-500 mt-1">{subtitle}</p>
+
+        <p className="text-[11px] text-slate-500 mt-1 text-center leading-snug">
+          {subtitle}
+        </p>
       </div>
     </button>
   );
 }
+

@@ -1,138 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================================
-   1. GLOBAL RESETS & UI REFINEMENTS
-   ============================================================ */
-html {
-    scroll-behavior: smooth;
-    /* Remove space reserved by Google Translate */
-    margin-top: 0 !important;
-}
+@layer base {
+  :root {
+    /* Dark theme judicial aesthetic */
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
+    --card: 222 47% 8%;
+    --card-foreground: 210 40% 96%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 199 89% 48%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 222 47% 14%;
+    --muted-foreground: 215 20% 55%;
+    --border: 222 30% 18%;
+    --radius: 0.75rem;
+    --input: 222 30% 18%;
+  --ring: 160 84% 39%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --accent: 199 89% 48%;
+  --accent-foreground: 210 40% 98%;
+    /* Custom tokens for LegalEdge effects */
+    --glow-emerald: 160 84% 39%;
+    --glow-blue: 199 89% 48%;
+    --timeline-active: 160 84% 45%;
+    --timeline-inactive: 222 30% 25%;
+  }
 
-body {
-    margin: 0;
-    padding: 0;
-    /* CHANGED: Allow body to grow with content */
-    min-height: 100vh; 
-    /* CHANGED: Enable vertical scrolling */
-    overflow-y: auto; 
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+    /* Allow body to grow with content and enable scrolling */
+    min-height: 100vh;
+    overflow-y: auto;
     overflow-x: hidden;
-    background-color: #030712;
-    color: #f1f5f9; /* slate-100 */
-    top: 0 !important; /* Prevent Google Translate page jump */
+    margin: 0;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
 }
 
-button:focus {
-    outline: none;
-}
+@layer components {
+  /* Layout Helper to prevent content jumping */
+  .container-max {
+    @apply max-w-[1400px] mx-auto px-6 min-h-screen flex flex-col;
+  }
 
-:focus-visible {
-    @apply ring-2 ring-emerald-400;
-}
+  /* Judicial Glowing Card Effect */
+  .card-glow {
+    @apply relative overflow-hidden;
+    box-shadow: 0 0 0 1px hsl(var(--border)), 0 4px 24px -4px hsl(var(--glow-emerald) / 0.15);
+  }
 
-/* ============================================================
-   2. LAYOUT & CONTAINER HELPERS
-   ============================================================ */
-.container-max {
-    /* CHANGED: Use min-h-screen to ensure background covers full view 
-       but allows expansion */
-    @apply max-w-[1600px] mx-auto px-6 min-h-screen flex flex-col;
-}
+  .card-glow:hover::before {
+    content: '';
+    @apply absolute inset-0 opacity-100 transition-opacity duration-300 pointer-events-none;
+    background: radial-gradient(600px circle at 50% 50%, hsl(var(--glow-emerald) / 0.08), transparent 40%);
+  }
 
-.shadow-2xl {
-    box-shadow: 0 8px 30px rgba(2, 6, 23, 0.6);
-}
+  /* Status Badges */
+  .badge-hearing { @apply bg-sky-500/20 text-sky-400 border border-sky-500/30; }
+  .badge-active { @apply bg-emerald-500/20 text-emerald-400 border border-emerald-500/30; }
 
-.landing-bg {
-    background-image: url('/legal-bg.jpeg');
-    background-position: center right;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed; /* Keeps background steady during scroll */
-}
-
-/* ============================================================
-   3. ANIMATIONS & TRANSITION UTILITIES
-   ============================================================ */
-@keyframes fadeUp {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fade-up {
-    animation: fadeUp 420ms cubic-bezier(.2,.9,.2,1) both;
+  /* Judicial Timeline UI */
+  .timeline-node { @apply relative flex items-center gap-4; }
+  .timeline-node::before {
+    content: '';
+    @apply absolute left-5 top-12 w-0.5 h-full -translate-x-1/2 bg-muted;
+  }
+  .timeline-node-active::before {
+    @apply bg-gradient-to-b from-primary to-muted;
+  }
 }
 
 @layer utilities {
-    .ease-premium {
-        transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    
-    .animate-delay-100 { animation-delay: 100ms; }
-    .animate-delay-150 { animation-delay: 150ms; }
-    
-    .delay-200 { transition-delay: 200ms; }
-    .delay-300 { transition-delay: 300ms; }
-    .delay-400 { transition-delay: 400ms; }
-    .delay-500 { transition-delay: 500ms; }
-    .delay-700 { transition-delay: 700ms; }
+  /* Emerald-to-Blue Gradient for Headings */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary;
+  }
+
+  /* Subtle UI pattern */
+  .bg-pattern {
+    background-image: 
+      radial-gradient(circle at 25% 25%, hsl(var(--glow-emerald) / 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, hsl(var(--glow-blue) / 0.03) 0%, transparent 50%);
+  }
 }
 
-/* ============================================================
-   4. CUSTOM SCROLLBAR (Global & Internal)
-   ============================================================ */
-/* Applying scrollbar styles to the whole body for a cohesive look */
-::-webkit-scrollbar {
-    width: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: #030712;
-}
-
+/* Custom Emerald Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #030712; }
 ::-webkit-scrollbar-thumb {
-    background: rgba(16, 185, 129, 0.2);
-    border-radius: 20px;
+  background: rgba(16, 185, 129, 0.2);
+  border-radius: 20px;
 }
-
-::-webkit-scrollbar-thumb:hover {
-    background: #10b981;
-}
-
-/* Firefox */
-* {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(16, 185, 129, 0.2) transparent;
-}
-
-/* ============================================================
-   5. GOOGLE TRANSLATE CLEANUP
-   ============================================================ */
-.goog-logo-link,
-.goog-te-gadget,
-.goog-te-combo,
-.goog-te-banner-frame,
-.skiptranslate {
-    display: none !important;
-}
-
-.goog-text-highlight {
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-iframe.goog-te-banner-frame {
-    display: none !important;
-}
-
-body {
-    position: static !important;
-}
+::-webkit-scrollbar-thumb:hover { background: #10b981; }

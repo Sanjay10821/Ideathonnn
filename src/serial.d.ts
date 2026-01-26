@@ -8,6 +8,6 @@ interface SerialPort {
 
 interface Navigator {
   serial: {
-    requestPort(): Promise<SerialPort>;
+   // requestPort(): Promise<SerialPort>;
   };
 }
