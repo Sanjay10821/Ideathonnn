@@ -9,7 +9,7 @@ import {
 // Added NFC_TAP to SubStep type
 type SubStep = 'MODE_SELECT' | 'REGISTRATION' | 'OTP' | 'NFC_TAP' | 'BIO' | 'NFC_ISSUE';
 
-export default function LoginPage({ onSuccess, onBack }: any) {
+export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
   const [subStep, setSubStep] = useState<SubStep>('MODE_SELECT');
   const [role, setRole] = useState<'citizen' | 'authority'>('citizen');
   const [isExistingUser, setIsExistingUser] = useState(false);
@@ -43,6 +43,10 @@ export default function LoginPage({ onSuccess, onBack }: any) {
       }
     }, 2200);
   };
+  const handleLocateKiosk = () => {
+  onNavigate('locate');
+};
+
 
   // Logic for Existing User NFC Tap
   const handleNFCTap = () => {
@@ -101,6 +105,7 @@ export default function LoginPage({ onSuccess, onBack }: any) {
           </motion.div>
         )}
       </AnimatePresence>
+      
 
       <button onClick={onBack} className="absolute top-10 left-10 z-50 flex items-center gap-2 text-slate-500 hover:text-white uppercase text-[10px] font-bold tracking-widest transition-all italic group">
         <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Back
@@ -125,7 +130,7 @@ export default function LoginPage({ onSuccess, onBack }: any) {
             </div>
           </motion.div>
         </div>
-
+        
         <div className="flex items-center justify-center p-6 relative">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
           
@@ -144,8 +149,32 @@ export default function LoginPage({ onSuccess, onBack }: any) {
                     <button onClick={() => { setIsExistingUser(true); setSubStep('NFC_TAP'); }} className="w-full p-6 bg-[#111827] border border-white/5 rounded-3xl flex items-center gap-6 hover:bg-emerald-500 group transition-all text-left">
                       <Shield size={24} className="text-emerald-500 group-hover:text-black" />
                       <div className="text-white group-hover:text-black uppercase italic leading-none font-black">Existing User</div>
+                      
                       <ArrowRight size={18} className="ml-auto text-slate-700 group-hover:text-black" />
                     </button>
+                    <button
+  onClick={handleLocateKiosk}
+  className="w-full p-6 bg-[#111827] border border-white/5
+             rounded-3xl flex items-center gap-6
+             hover:bg-[#0b1220] transition-all text-left group"
+>
+  <ShieldCheck size={24} className="text-emerald-500" />
+
+  <div className="flex flex-col">
+    <span className="text-white uppercase italic leading-none font-black">
+      Locate Nearby Kiosk
+    </span>
+    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+      Use if this kiosk is unavailable
+    </span>
+  </div>
+
+  <ArrowRight
+    size={18}
+    className="ml-auto text-slate-700 group-hover:text-emerald-400"
+  />
+</button>
+
                   </div>
                 </motion.div>
               )}
