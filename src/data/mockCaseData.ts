@@ -3,12 +3,12 @@ import { CaseData, TimelineEvent, Reminder } from '../types/case';
 export const mockCaseData: CaseData = {
   cnr: 'TNCO123456789012',
   title: 'Property Dispute Resolution',
-  petitioner: 'Rajesh Kumar',
+  petitioner: 'Sanjay R ',
   respondent: 'Municipal Corporation',
   status: 'hearing',
-  courtName: 'District Court, Chennai',
+  courtName: 'District Court, Coimbatore',
   state: 'Tamil Nadu',
-  district: 'Chennai',
+  district: 'Coimbatore',
   nextHearingDate: '15 February 2026',
   presidingBench: 'Hon. Justice M. Venkatesh'
 };
@@ -56,7 +56,7 @@ export const mockReminders: Reminder[] = [
     type: 'hearing',
     title: 'Upcoming Court Hearing',
     date: '15 February 2026, 10:30 AM',
-    description: 'Court Room 4, District Court Chennai',
+    description: 'Court Room 4, District Court Coimbatore',
     urgent: true
   },
   {
