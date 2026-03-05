@@ -34,9 +34,15 @@ export default function LandingPage({ onLanguageSelect }: LandingPageProps) {
     changeLanguage(lang);
     onLanguageSelect(lang);
 
-    if (lang === 'en') sendToESP32('EN');
-    if (lang === 'hi') sendToESP32('HI');
-    if (lang === 'ta') sendToESP32('TA');
+    // REPLACE with this:
+    try {
+      const { sendToESP32 } = await import('../utils/serial');
+      if (lang === 'en') sendToESP32('EN');
+      if (lang === 'hi') sendToESP32('HI');
+      if (lang === 'ta') sendToESP32('TA');
+    } catch (e) {
+      // Serial not available in browser — that's okay
+    }
   };
 
   useEffect(() => {
