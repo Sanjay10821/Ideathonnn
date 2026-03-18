@@ -12,6 +12,7 @@ import LegalChatbot from './components/LegalChatbot';
 import LocateKiosk from './components/LocateKiosk';
 import { changeLanguage } from './translate';
 import i18n from './i18n';
+import RemindersPage from './components/RemaindersPage';
 
 /* ---------------- TYPES ---------------- */
 
@@ -25,7 +26,8 @@ type Page =
   | 'tracking'
   | 'impact'
   | 'case'
-  | 'chatbot';
+  | 'chatbot'
+  | 'reminders';
 
 /* ---------------- TOUR ---------------- */
 
@@ -157,6 +159,9 @@ export default function App() {
             <LegalChatbot />
           </div>
         );
+      
+      case 'reminders':
+        return <RemindersPage onNavigate={navigate} />;
 
       default:
         return <HomePage onNavigate={navigate} />;
