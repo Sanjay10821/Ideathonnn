@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Fingerprint, ShieldCheck, ArrowRight, 
+  ShieldCheck, ArrowRight, 
   Calendar, CheckCircle2, ChevronLeft, 
   ChevronDown, UserPlus, Shield, RefreshCw,
   AlertCircle, Loader2
 } from 'lucide-react';
 import { requestOTP, verifyOTP } from '../utils/otp';
 
-type SubStep = 'MODE_SELECT' | 'REGISTRATION' | 'OTP' | 'NFC_TAP' | 'BIO' | 'NFC_ISSUE';
+type SubStep = 'MODE_SELECT' | 'REGISTRATION' | 'OTP' | 'NFC_TAP' | 'NFC_ISSUE';
 
 export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
   const [subStep, setSubStep] = useState<SubStep>('MODE_SELECT');
@@ -18,9 +18,7 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
   const [timer, setTimer] = useState(30);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: '', sub: '' });
-  const [isScanning, setIsScanning] = useState(false);
 
-  // 🆕 Loading and error states
   const [isSendingOTP, setIsSendingOTP] = useState(false);
   const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
   const [otpError, setOtpError] = useState('');
@@ -53,7 +51,6 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
 
   const handleLocateKiosk = () => onNavigate('locate');
 
-  // 🆕 REAL: Send OTP when user clicks "Send OTP"
   const handleRequestOTP = async () => {
     setSendError('');
     setIsSendingOTP(true);
@@ -68,7 +65,6 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
     }
   };
 
-  // 🆕 REAL: Verify OTP when user clicks "Continue"
   const handleVerifyOTP = async () => {
     setOtpError('');
     const enteredOTP = otp.join('');
@@ -80,13 +76,12 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
     const result = await verifyOTP(formData.phone, enteredOTP);
     setIsVerifyingOTP(false);
     if (result.success) {
-      triggerSuccess("OTP VERIFIED", "Welcome", 'BIO');
+      triggerSuccess("OTP VERIFIED", "Welcome! Issuing your identity card.", 'NFC_ISSUE');
     } else {
       setOtpError(result.error || 'Wrong OTP. Please try again.');
     }
   };
 
-  // 🆕 REAL: Resend OTP actually sends a new SMS
   const handleResendOTP = async () => {
     setOtpError('');
     setOtp(['', '', '', '']);
@@ -98,19 +93,7 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
 
   const handleNFCTap = () => {
     setFormData(prev => ({ ...prev, name: 'Sanjay' }));
-    triggerSuccess("CARD MATCHED", "Hello, Sanjay. Please verify biometrics.", 'BIO');
-  };
-
-  const handleStartScan = () => {
-    setIsScanning(true);
-    setTimeout(() => {
-      setIsScanning(false);
-      if (isExistingUser) {
-        triggerSuccess("ACCESS GRANTED", "Identity Verified Successfully", 'COMPLETE');
-      } else {
-        triggerSuccess("BIOMETRIC ANCHORED", "Security profile created", 'NFC_ISSUE');
-      }
-    }, 3000);
+    triggerSuccess("CARD MATCHED", "Hello, Sanjay. Access granted.", 'COMPLETE');
   };
 
   const isFormValid = formData.name && formData.dob && formData.phone.length === 10 && formData.aadhaar.length === 12 && formData.consent;
@@ -142,7 +125,7 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
               <CheckCircle2 size={80} className="text-emerald-500 mx-auto mb-6" />
               <h3 className="text-3xl font-black uppercase italic tracking-tighter">
                 {successMessage.title.split(' ')[0]}{' '}
-                <span className="text-emerald-500">{successMessage.title.split(' ')[1]}</span>
+                <span className="text-emerald-500">{successMessage.title.split(' ').slice(1).join(' ')}</span>
               </h3>
               <p className="text-slate-400 text-xs font-bold tracking-widest mt-4 uppercase">{successMessage.sub}</p>
             </motion.div>
@@ -165,7 +148,7 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
               <span className="text-emerald-400">IDENTITY</span>
             </h1>
             <p className="mt-8 max-w-md text-slate-400 text-lg leading-relaxed">
-              Unified Justice Registration for secure, biometric-backed legal identity across kiosks and digital systems.
+              Unified Justice Registration for secure, OTP-verified legal identity across kiosks and digital systems.
             </p>
             <div className="mt-12 flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
@@ -235,7 +218,21 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
                     <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Name as per Aadhaar" className="w-full p-4 bg-[#111827] border border-white/5 rounded-2xl outline-none focus:border-emerald-500/50 text-white text-sm font-bold placeholder:text-slate-500" />
                     <div className="grid grid-cols-[1.4fr,1fr] gap-3">
                       <div className="relative">
-                        <input type="text" placeholder="dd-mm-yyyy" onFocus={(e) => (e.target.type = "date")} onBlur={(e) => (e.target.type = "text")} value={formData.dob} onChange={e => setFormData({...formData, dob: e.target.value})} className="w-full p-4 bg-[#111827] border border-white/5 rounded-2xl text-white text-sm font-bold outline-none focus:border-emerald-500/50" />
+                        <input
+                          type="text"
+                          placeholder="dd-mm-yyyy"
+                          value={formData.dob}
+                          onChange={e => {
+                            let val = e.target.value.replace(/[^\d]/g, ''); // strip non-digits
+                            if (val.length > 8) val = val.slice(0, 8);      // max 8 digits total
+                            // auto-insert dashes
+                            if (val.length > 4) val = val.slice(0, 2) + '-' + val.slice(2, 4) + '-' + val.slice(4);
+                            else if (val.length > 2) val = val.slice(0, 2) + '-' + val.slice(2);
+                            setFormData({...formData, dob: val});
+                          }}
+                          maxLength={10}
+                          className="w-full p-4 bg-[#111827] border border-white/5 rounded-2xl text-white text-sm font-bold outline-none focus:border-emerald-500/50"
+                        />
                         <Calendar className="absolute right-4 top-4 text-slate-600 pointer-events-none" size={16} />
                       </div>
                       <div className="relative">
@@ -256,11 +253,10 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
                       {formData.consent && <CheckCircle2 size={12} className="text-black" />}
                     </div>
                     <p className="text-[11px] text-slate-400 font-bold leading-snug cursor-pointer select-none" onClick={() => setFormData({...formData, consent: !formData.consent})}>
-                      I consent to biometric authentication for identity verification.
+                      I consent to OTP-based identity verification and data processing.
                     </p>
                   </div>
 
-                  {/* Error message */}
                   {sendError && (
                     <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
                       <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
@@ -268,7 +264,6 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
                     </div>
                   )}
 
-                  {/* 🆕 REAL OTP button */}
                   <button
                     disabled={!isFormValid || isSendingOTP}
                     onClick={handleRequestOTP}
@@ -294,7 +289,6 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
                     </div>
                   </div>
 
-                  {/* OTP boxes */}
                   <div className="flex justify-center gap-4 py-2">
                     {otp.map((d, i) => (
                       <input key={i} id={`otp-${i}`} type="text" maxLength={1} value={d} onChange={(e) => handleOtpInput(e.target.value, i)}
@@ -303,7 +297,6 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
                     ))}
                   </div>
 
-                  {/* OTP error */}
                   {otpError && (
                     <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
                       <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
@@ -312,7 +305,6 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
                   )}
 
                   <div className="space-y-6">
-                    {/* 🆕 REAL verify button */}
                     <button
                       onClick={handleVerifyOTP}
                       disabled={isVerifyingOTP || otp.join('').length < 4}
@@ -330,7 +322,6 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
                           Resend code in <span className="text-emerald-400 ml-1">{timer}s</span>
                         </p>
                       ) : (
-                        // 🆕 REAL resend
                         <button onClick={handleResendOTP} disabled={isSendingOTP} className="group flex items-center gap-2 text-[10px] text-emerald-400 font-black uppercase tracking-widest hover:text-white transition-colors">
                           <RefreshCw size={12} className={isSendingOTP ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
                           {isSendingOTP ? 'Sending...' : 'Resend OTP Now'}
@@ -338,34 +329,6 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
                       )}
                     </div>
                   </div>
-                </motion.div>
-              )}
-
-              {/* BIOMETRIC */}
-              {subStep === 'BIO' && (
-                <motion.div key="bio" className="text-center space-y-10">
-                  <div className="relative w-48 h-48 mx-auto flex items-center justify-center">
-                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} className={`absolute inset-0 rounded-full border border-dashed ${isScanning ? 'border-emerald-500' : 'border-emerald-500/30'}`} />
-                    <AnimatePresence>
-                      {isScanning && (
-                        <>
-                          <motion.div animate={{ opacity: [0.2, 0.4, 0.2] }} transition={{ duration: 1, repeat: Infinity }} className="absolute inset-4 rounded-full bg-emerald-500/20 blur-xl" />
-                          <motion.div animate={{ top: ['10%', '90%', '10%'] }} transition={{ duration: 1.5, repeat: Infinity }} className="absolute left-0 right-0 h-[2px] bg-emerald-400 shadow-glow z-10" />
-                        </>
-                      )}
-                    </AnimatePresence>
-                    <Fingerprint size={90} className={`transition-all duration-500 ${isScanning ? 'text-emerald-400 scale-110' : 'text-emerald-500/40'}`} />
-                  </div>
-                  <div className="space-y-4">
-                    <h2 className="text-3xl font-black uppercase italic tracking-tighter leading-none">{isScanning ? 'SCANNING...' : 'PLACE FINGER'}</h2>
-                    {isExistingUser && !isScanning && (
-                      <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] animate-pulse text-center">
-                        <span className="block">Hello {formData.name}</span>
-                        <span className="block mt-1">Place your registered finger to verify identity</span>
-                      </p>
-                    )}
-                  </div>
-                  <button disabled={isScanning} onClick={handleStartScan} className="w-full py-5 bg-emerald-500 text-black font-black rounded-[2rem] uppercase text-[12px] tracking-widest">Start Scan</button>
                 </motion.div>
               )}
 
@@ -399,7 +362,6 @@ export default function LoginPage({ onSuccess, onBack, onNavigate }: any) {
 
       <style>{`
         @keyframes shimmer { 0% { left: -150%; } 100% { left: 150%; } }
-        .shadow-glow { box-shadow: 0 0 15px rgba(52, 211, 153, 1); }
       `}</style>
     </div>
   );
