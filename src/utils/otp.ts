@@ -1,44 +1,33 @@
 import { createClient } from '@supabase/supabase-js';
 
-// ── Connect to Supabase ──────────────────────────────────────────────────────
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-// ── Generate a random 4-digit OTP ────────────────────────────────────────────
 function generateOTP(): string {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-// ── Send SMS via Twilio (through Supabase Edge Function) ──────────────────────
 async function sendSMS(phone: string, otp: string): Promise<boolean> {
   try {
-    const response = await fetch(
-      `/functions/v1/dynamic-worker`, 
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ phone, otp }),
-      }
-    );
-
+    const response = await fetch('/functions/v1/dynamic-worker', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ phone, otp }),
+    });
     const data = await response.json();
-    console.log("Edge function response:", data);
-    
-    // Accept any response that has an account_sid — means Twilio accepted it
+    console.log('Edge function response:', data);
     return data.data?.account_sid !== undefined;
-
   } catch (error) {
-    console.error("SMS sending failed:", error);
+    console.error('SMS sending failed:', error);
     return false;
   }
 }
 
-// ── REQUEST OTP ───────────────────────────────────────────────────────────────
 export async function requestOTP(phone: string): Promise<{
   success: boolean;
   error?: string;
@@ -62,7 +51,6 @@ export async function requestOTP(phone: string): Promise<{
   }
 
   const smsSent = await sendSMS(phone, otp);
-
   if (!smsSent) {
     return { success: false, error: 'Could not send SMS. Please check your number and try again.' };
   }
@@ -70,7 +58,6 @@ export async function requestOTP(phone: string): Promise<{
   return { success: true };
 }
 
-// ── VERIFY OTP ────────────────────────────────────────────────────────────────
 export async function verifyOTP(phone: string, enteredOTP: string): Promise<{
   success: boolean;
   error?: string;
@@ -101,4 +88,127 @@ export async function verifyOTP(phone: string, enteredOTP: string): Promise<{
     .eq('id', data.id);
 
   return { success: true };
+}
+
+// ── CHECK IF PHONE IS ALREADY REGISTERED ─────────────────────────────────────
+// Called before sending OTP so we catch duplicates at the earliest possible
+// point — before the user wastes time entering and verifying an OTP.
+// Returns the existing user's name so the popup can greet them by name.
+export async function checkIfAlreadyRegistered(phone: string): Promise<{
+  registered: boolean;
+  name?: string;
+  hasCard?: boolean; // true if they already have a NFC UID linked
+}> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('name, nfc_uid')
+    .eq('phone', phone)
+    .maybeSingle();
+
+  if (error || !data) return { registered: false };
+
+  return {
+    registered: true,
+    name: data.name,
+    hasCard: !!data.nfc_uid,
+  };
+}
+
+// ── SAVE USER PROFILE ─────────────────────────────────────────────────────────
+// Only called after OTP is verified. Returns alreadyRegistered: true if a race
+// condition somehow lets a duplicate through (e.g. double submit). The UI
+// treats this the same as the pre-OTP check — shows the already-registered popup.
+export async function saveUserProfile(profile: {
+  name: string;
+  dob: string;
+  gender: string;
+  phone: string;
+  aadhaar: string;
+}): Promise<{
+  success: boolean;
+  userId?: string;
+  alreadyRegistered?: boolean;
+  existingName?: string;
+  error?: string;
+}> {
+  // Guard against race conditions between the SEND OTP check and now
+  const { data: existing } = await supabase
+    .from('users')
+    .select('id, name')
+    .eq('phone', profile.phone)
+    .maybeSingle();
+
+  if (existing) {
+    return {
+      success: false,
+      alreadyRegistered: true,
+      existingName: existing.name,
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('users')
+    .insert({
+      name: profile.name,
+      dob: profile.dob,
+      gender: profile.gender,
+      phone: profile.phone,
+      aadhaar_last4: profile.aadhaar.slice(-4),
+      nfc_uid: null,
+    })
+    .select('id')
+    .single();
+
+  if (error || !data) {
+    console.error('saveUserProfile error:', error);
+    return { success: false, error: 'Could not save profile. Please try again.' };
+  }
+
+  return { success: true, userId: data.id };
+}
+
+export async function updateNfcUid(userId: string, nfcUid: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  const { error } = await supabase
+    .from('users')
+    .update({ nfc_uid: nfcUid })
+    .eq('id', userId);
+
+  if (error) {
+    console.error('updateNfcUid error:', error);
+    return { success: false, error: 'Could not link card UID. Please try again.' };
+  }
+
+  return { success: true };
+}
+
+export function generatePlaceholderNfcUid(): string {
+  return Array.from({ length: 4 }, () =>
+    Math.floor(Math.random() * 256).toString(16).padStart(2, '0').toUpperCase()
+  ).join(':');
+}
+
+export async function lookupUserByNfcUid(nfcUid: string): Promise<{
+  success: boolean;
+  user?: { id: string; name: string; phone: string; gender: string };
+  error?: string;
+}> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, name, phone, gender')
+    .eq('nfc_uid', nfcUid)
+    .maybeSingle();
+
+  if (error) {
+    console.error('lookupUserByNfcUid error:', error);
+    return { success: false, error: 'Database error during card lookup.' };
+  }
+
+  if (!data) {
+    return { success: false, error: 'Card not recognised. Please register as a new user.' };
+  }
+
+  return { success: true, user: data };
 }
